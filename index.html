@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEURAPRESS // Quantum PDF Compressor</title>
+  
+  <!-- Tailwind CSS (local vendored build) -->
+  <script src="vendor/tailwind.js"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+  
+  <!-- PDF.js Engine -->
+  <script src="vendor/pdf.min.js"></script>
+  
+  <!-- PDF-Lib Engine -->
+  <script src="vendor/pdf-lib.min.js"></script>
+  
+  <!-- Tone.js Audio Synthesizer -->
+  <script src="vendor/Tone.js"></script>
+  
+  <!-- Canvas Confetti Celebration FX -->
+  <script src="vendor/confetti.browser.min.js"></script>
+
+  <style>
+    @import url('vendor/fonts.css');
+
+    :root {
+      --neon-cyan: #00f3ff;
+      --neon-violet: #a855f7;
+      --neon-emerald: #10b981;
+      --neon-amber: #f59e0b;
+      --neon-rose: #f43f5e;
+      --dark-obsidian: #030712;
+      --panel-bg: rgba(10, 16, 31, 0.78);
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background-color: var(--dark-obsidian);
+      color: #e2e8f0;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 45%),
+        linear-gradient(rgba(3, 7, 18, 0.96), rgba(3, 7, 18, 0.96)),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 243, 255, 0.015) 2px, rgba(0, 243, 255, 0.015) 4px);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 100% 4px;
+    }
+
+    .font-hud { font-family: 'Orbitron', monospace; }
+    .font-code { font-family: 'JetBrains Mono', monospace; }
+
+    /* Futuristic HUD Glass Panel */
+    .hud-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(0, 243, 255, 0.18);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(0, 243, 255, 0.03);
+      position: relative;
+    }
+
+    .hud-panel::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 15%;
+      width: 70%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    }
+
+    /* Glow Effects */
+    .glow-cyan {
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.35);
+    }
+    .glow-cyan-text {
+      text-shadow: 0 0 12px rgba(0, 243, 255, 0.8);
+    }
+    .glow-emerald-text {
+      text-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+    }
+    .glow-violet-text {
+      text-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
+    }
+
+    /* Interactive laser beam animation */
+    @keyframes scanbeam {
+      0% { top: 0%; opacity: 0.9; }
+      50% { opacity: 1; }
+      100% { top: 100%; opacity: 0.9; }
+    }
+    .laser-scanner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), #ffffff, var(--neon-cyan), transparent);
+      box-shadow: 0 0 12px var(--neon-cyan), 0 0 25px var(--neon-cyan);
+      animation: scanbeam 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+      pointer-events: none;
+    }
+
+    /* Background HUD Grid */
+    .grid-bg {
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(to right, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+    }
+
+    /* Cybernetic Corner Accents */
+    .cyber-corner-tl {
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      width: 10px;
+      height: 10px;
+      border-top: 2px solid var(--neon-cyan);
+      border-left: 2px solid var(--neon-cyan);
+    }
+    .cyber-corner-br {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 10px;
+      height: 10px;
+      border-bottom: 2px solid var(--neon-cyan);
+      border-right: 2px solid var(--neon-cyan);
+    }
+
+    /* Custom range sliders */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: rgba(0, 243, 255, 0.12);
+      border-radius: 9999px;
+      height: 6px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan);
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      transition: transform 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #040814;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 243, 255, 0.25);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--neon-cyan);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-black">
+
+  <header class="w-full border-b border-cyan-500/20 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Engine Tag -->
+      <div class="flex items-center space-x-3">
+        <div class="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-violet-600/20 border border-cyan-400/40">
+          <i class="fa-solid fa-atom text-cyan-400 text-xl animate-spin" style="animation-duration: 10s;"></i>
+          <span class="absolute inset-0 rounded-xl border border-cyan-400/30 animate-pulse"></span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-hud tracking-wider font-extrabold text-lg sm:text-xl text-white">NEURA<span class="text-cyan-400">PRESS</span></span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-code font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-500/40">QUANTUM 5.0</span>
+          </div>
+          <p class="text-[11px] font-code text-cyan-300 tracking-tight hidden sm:block">LOCAL MULTI-CORE PDF COMPRESSION PIPELINE</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <div class="hidden md:flex items-center space-x-2 text-xs font-code bg-black/50 px-3 py-1.5 rounded-lg border border-cyan-500/20">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="text-emerald-400 font-semibold">ENGINE ONLINE</span>
+          <span class="text-slate-300">|</span>
+          <span class="text-slate-300">100% IN-APP RAM PIPELINE</span>
+        </div>
+
+        <!-- Audio Telemetry Toggle -->
+        <button id="audio-toggle-btn" class="p-2 px-3 rounded-lg bg-slate-900 border border-cyan-500/30 text-cyan-400 hover:text-white hover:border-cyan-400 transition-all text-xs font-code flex items-center gap-1.5" title="Toggle Futuristic Acoustic SFX">
+          <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+          <span class="hidden sm:inline">SFX</span>
+        </button>
+
+        <!-- Synthesize Demo Document Button -->
+        <button id="generate-sample-btn" class="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 hover:text-cyan-100 font-code text-xs font-semibold transition-all flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-cyan-400"></i>
+          <span>DEMO PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Mission Header Title -->
+    <div class="text-center space-y-2 pt-2">
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black font-hud tracking-tight text-white uppercase">
+        HYPER-QUANTUM <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-violet-400">PDF COMPRESSOR</span>
+      </h1>
+      <p class="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base font-medium">
+        Hardware-accelerated in-memory optimization. Shrinks oversized images, recompiles streams, and strips redundant structures without data ever leaving the app.
+      </p>
+    </div>
+
+    <div id="dropzone-card" class="hud-panel rounded-2xl p-6 sm:p-10 transition-all duration-300 hover:border-cyan-400/50 cursor-pointer relative overflow-hidden group">
+      <div class="cyber-corner-tl"></div>
+      <div class="cyber-corner-br"></div>
+      <div class="grid-bg absolute inset-0 pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity"></div>
+
+      <!-- Native hidden file selector -->
+      <input type="file" id="file-input" accept="application/pdf" class="hidden" />
+
+      <div class="relative z-10 flex flex-col items-center justify-center text-center space-y-4">
+        <!-- Hologram ring badge -->
+        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-cyan-950/60 border-2 border-dashed border-cyan-400/50 flex items-center justify-center group-hover:scale-105 group-hover:border-cyan-300 transition-all duration-300 relative shadow-[0_0_30px_rgba(0,243,255,0.15)]">
+          <i class="fa-solid fa-file-pdf text-3xl sm:text-4xl text-cyan-400 group-hover:text-cyan-200 transition-colors"></i>
+          <span class="absolute -bottom-2 px-2 py-0.5 rounded-full text-[9px] font-code font-bold bg-cyan-500 text-black uppercase tracking-wider">UPLINK</span>
+        </div>
+
+        <div class="space-y-1">
+          <h2 class="text-lg sm:text-xl font-bold font-hud text-white group-hover:text-cyan-300 transition-colors">
+            DRAG & DROP TARGET PDF HERE OR CLICK TO SELECT
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-300 font-code">
+            Accepts any PDF size • 100% Client-Side In-Memory Execution • Zero Data Leakage
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4 pt-1 text-xs font-code text-cyan-300">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> Up to 90% Compression</span>
+          <span class="text-slate-300">•</span>
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-emerald-400"></i> Strict Local Privacy</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="controls-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Compression Profile Presets -->
+      <div class="hud-panel rounded-2xl p-5 space-y-4 relative">
+        <div class="cyber-corner-tl"></div>
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-sliders text-cyan-400"></i>
+            <h3 class="font-hud font-bold text-sm tracking-wide text-white">COMPRESSION PROFILE</h3>
+          </div>
+          <span class="text-[10px] font-code text-cyan-300">PRESETS</span>
+        </div>
+
+        <div class="space-y-2.5">
+          <!-- Extreme -->
+          <label class="preset-card relative flex items-center p-3 rounded-xl border border-cyan-500/20 bg-slate-900/60 hover:bg-cyan-950/30 cursor-pointer transition-all">
+            <input type="radio" name="compression-preset" value="extreme" class="hidden">
+            <div class="w-4 h-4 rounded-full border-2 border-cyan-400 flex items-center justify-center mr-3 radio-indicator">
+              <div class="w-2 h-2 rounded-full bg-cyan-400 opacity-0"></div>
+            </div>
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm text-white">HYPER QUANTUM</span>
+                <span class="text-[11px] font-code text-rose-400 font-semibold">-75% to -90%</span>
+              </div>
+              <p class="text-xs text-slate-300">Maximum crunch for small emails, chat uploads, and text documents.</p>
+            </div>
+          </label>
+
+          <!-- Balanced (Default) -->
+          <label class="preset-card relative flex items-center p-3 rounded-xl border border-cyan-400 bg-cyan-950/40 cursor-pointer transition-all glow-cyan">
+            <input type="radio" name="compression-preset" value="balanced" checked class="hidden">
+            <div class="w-4 h-4 rounded-full border-2 border-cyan-400 flex items-center justify-center mr-3 radio-indicator">
+              <div class="w-2 h-2 rounded-full bg-cyan-400 opacity-100"></div>
+            </div>
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm text-cyan-300">BALANCED MATRIX</span>
+                <span class="text-[11px] font-code text-emerald-400 font-semibold">-50% to -70%</span>
+              </div>
+              <p class="text-xs text-slate-300">Golden ratio. Sharp text legibility with heavily optimized bitmap assets.</p>
+            </div>
+          </label>
+
+          <!-- Studio -->
+          <label class="preset-card relative flex items-center p-3 rounded-xl border border-cyan-500/20 bg-slate-900/60 hover:bg-cyan-950/30 cursor-pointer transition-all">
+            <input type="radio" name="compression-preset" value="studio" class="hidden">
+            <div class="w-4 h-4 rounded-full border-2 border-cyan-400 flex items-center justify-center mr-3 radio-indicator">
+              <div class="w-2 h-2 rounded-full bg-cyan-400 opacity-0"></div>
+            </div>
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm text-white">STUDIO FIDELITY</span>
+                <span class="text-[11px] font-code text-amber-400 font-semibold">-25% to -45%</span>
+              </div>
+              <p class="text-xs text-slate-300">Minimal loss. Retains vector line-art, diagrams, and print-ready fidelity.</p>
+            </div>
+          </label>
+
+          <!-- Custom Mode -->
+          <label class="preset-card relative flex items-center p-3 rounded-xl border border-cyan-500/20 bg-slate-900/60 hover:bg-cyan-950/30 cursor-pointer transition-all">
+            <input type="radio" name="compression-preset" value="custom" class="hidden">
+            <div class="w-4 h-4 rounded-full border-2 border-cyan-400 flex items-center justify-center mr-3 radio-indicator">
+              <div class="w-2 h-2 rounded-full bg-cyan-400 opacity-0"></div>
+            </div>
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm text-white">MANUAL CALIBRATION</span>
+                <span class="text-[11px] font-code text-cyan-400 font-semibold">CUSTOM</span>
+              </div>
+              <p class="text-xs text-slate-300">Manually fine-tune scale multipliers, JPEG quantization, and monochrome mode.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="hud-panel rounded-2xl p-5 space-y-5 relative">
+        <div class="cyber-corner-tl"></div>
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-microchip text-cyan-400"></i>
+            <h3 class="font-hud font-bold text-sm tracking-wide text-white">ENGINE CALIBRATION</h3>
+          </div>
+          <span id="calibration-mode-badge" class="text-[10px] font-code text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">LOCKED (PRESET)</span>
+        </div>
+
+        <!-- Render Downsampling Scale -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs font-code">
+            <span class="text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-expand text-cyan-400"></i> RENDER SCALE DOWNSAMPLING</span>
+            <span id="scale-val-label" class="text-cyan-400 font-bold">1.0x (100%)</span>
+          </div>
+          <input type="range" id="scale-slider" min="0.4" max="1.5" step="0.05" value="1.0" class="w-full">
+          <div class="flex justify-between text-[10px] font-code text-slate-300">
+            <span>0.4x (Aggressive)</span>
+            <span>1.0x (Standard)</span>
+            <span>1.5x (High-Res)</span>
+          </div>
+        </div>
+
+        <!-- Quality Slider -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs font-code">
+            <span class="text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-wave-square text-cyan-400"></i> JPEG BITSTREAM QUALITY</span>
+            <span id="quality-val-label" class="text-cyan-400 font-bold">60%</span>
+          </div>
+          <input type="range" id="quality-slider" min="15" max="95" step="5" value="60" class="w-full">
+          <div class="flex justify-between text-[10px] font-code text-slate-300">
+            <span>15% (Maximum Crunch)</span>
+            <span>60% (Optimal)</span>
+            <span>95% (Near-Lossless)</span>
+          </div>
+        </div>
+
+        <!-- Grayscale Mode Toggle -->
+        <div class="pt-2 flex items-center justify-between border-t border-slate-800">
+          <div>
+            <span class="text-xs font-code text-white block">MONOCHROME (GRAYSCALE)</span>
+            <span class="text-[11px] text-slate-300">Eliminates chrominance channels for extreme document shrinkage</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="grayscale-toggle" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="hud-panel rounded-2xl p-5 flex flex-col justify-between relative">
+        <div class="cyber-corner-tl"></div>
+        <div class="cyber-corner-br"></div>
+
+        <div>
+          <div class="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-radar text-cyan-400"></i>
+              <h3 class="font-hud font-bold text-sm tracking-wide text-white">TARGET BLUEPRINT</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="doc-status-tag" class="text-[10px] font-code text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">AWAITING FILE</span>
+              <button id="clear-file-btn" title="Clear selected document" class="hidden flex items-center gap-1 text-[10px] font-code text-rose-400 bg-rose-950/60 hover:bg-rose-500/25 hover:text-rose-200 border border-rose-500/40 rounded px-2 py-0.5 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+                <span>CLEAR</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Document Metrics Telemetry -->
+          <div class="space-y-3 font-code text-xs">
+            <div class="flex justify-between items-center p-2.5 rounded-lg bg-black/40 border border-slate-800">
+              <span class="text-slate-300">PAYLOAD ID</span>
+              <span id="doc-filename" class="text-slate-200 font-semibold truncate max-w-[170px]">none_loaded.pdf</span>
+            </div>
+            <div class="flex justify-between items-center p-2.5 rounded-lg bg-black/40 border border-slate-800">
+              <span class="text-slate-300">ORIGINAL SIZE</span>
+              <span id="doc-original-size" class="text-cyan-400 font-bold">0.00 KB</span>
+            </div>
+            <div class="flex justify-between items-center p-2.5 rounded-lg bg-black/40 border border-slate-800">
+              <span class="text-slate-300">PAGE COUNT</span>
+              <span id="doc-pages" class="text-slate-200 font-bold">0</span>
+            </div>
+            <div class="flex justify-between items-center p-2.5 rounded-lg bg-black/40 border border-slate-800">
+              <span class="text-slate-300">ESTIMATED EFFICIENCY</span>
+              <span id="doc-estimated-gain" class="text-emerald-400 font-bold">~60% Reduction</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Initialize Compression Trigger Button -->
+        <div class="pt-5">
+          <button id="compress-action-btn" disabled class="w-full py-4 rounded-xl font-hud font-extrabold text-sm sm:text-base tracking-wider uppercase transition-all duration-300 flex items-center justify-center space-x-3 bg-slate-800/80 text-slate-300 border border-slate-700/80 cursor-not-allowed">
+            <i class="fa-solid fa-compress text-lg"></i>
+            <span>INITIALIZE COMPRESSION</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="processing-hud" class="hidden hud-panel rounded-2xl p-6 sm:p-8 space-y-6 relative overflow-hidden">
+      <div class="cyber-corner-tl"></div>
+      <div class="cyber-corner-br"></div>
+      <div class="laser-scanner"></div>
+
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-3.5 h-3.5 rounded-full bg-cyan-400 animate-ping"></div>
+          <div>
+            <h3 class="font-hud font-bold text-lg text-white">NEURAL STREAM PROCESSING</h3>
+            <p id="process-substep-label" class="text-xs font-code text-cyan-400">Synthesizing page vector buffers and applying quantizers...</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span id="process-percentage" class="text-3xl font-black font-hud text-cyan-400 glow-cyan-text">0%</span>
+        </div>
+      </div>
+
+      <!-- Real-time Progress Bar -->
+      <div class="space-y-2">
+        <div class="w-full h-3.5 bg-black/70 rounded-full border border-cyan-500/40 p-0.5 overflow-hidden">
+          <div id="progress-fill" class="h-full bg-gradient-to-r from-cyan-500 via-teal-400 to-indigo-500 rounded-full transition-all duration-200" style="width: 0%;"></div>
+        </div>
+        <div class="flex justify-between items-center text-xs font-code text-slate-300">
+          <span id="page-counter-label">PAGES: 0 / 0</span>
+          <span id="telemetry-speed">CLIENT ACCELERATED (0 CLOUD TRANSFERS)</span>
+        </div>
+      </div>
+
+      <!-- Page Mini-Preview Matrix Stream -->
+      <div class="space-y-2">
+        <span class="text-xs font-code text-slate-300 uppercase tracking-wider block">PAGE CHANNEL PIPELINE</span>
+        <div id="active-scan-grid" class="flex items-center gap-3 overflow-x-auto py-2 px-1">
+          <!-- Dynamically populated page thumbnails -->
+        </div>
+      </div>
+    </div>
+
+    <div id="results-hud" class="hidden hud-panel rounded-2xl p-6 sm:p-8 space-y-6 relative">
+      <div class="cyber-corner-tl"></div>
+      <div class="cyber-corner-br"></div>
+
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+            <h3 class="font-hud font-extrabold text-xl text-white">COMPRESSION SYNTHESIS COMPLETED</h3>
+          </div>
+          <p class="text-xs font-code text-emerald-400 mt-0.5">Payload optimized without loss of layout or document integrity.</p>
+          <p id="result-strategy" class="text-[11px] font-code text-slate-300 mt-1"></p>
+        </div>
+
+        <!-- Download Compressed PDF Button -->
+        <div class="flex items-center space-x-3 w-full sm:w-auto">
+          <button id="download-btn" class="flex-1 sm:flex-none px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-hud font-extrabold text-sm hover:from-cyan-300 hover:to-emerald-300 transition-all shadow-[0_0_25px_rgba(0,243,255,0.4)] flex items-center justify-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-down text-base"></i>
+            <span>DOWNLOAD COMPRESSED PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Metric Telemetry Cards Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <!-- Original Size -->
+        <div class="bg-black/50 border border-slate-800 rounded-xl p-4 space-y-1">
+          <span class="text-[10px] font-code text-slate-300 uppercase">INITIAL SIZE</span>
+          <div id="result-orig-size" class="text-xl sm:text-2xl font-hud font-bold text-slate-300">0 MB</div>
+          <span class="text-[11px] font-code text-slate-300">Uncompressed Source</span>
+        </div>
+
+        <!-- Compressed Size -->
+        <div class="bg-cyan-950/30 border border-cyan-500/30 rounded-xl p-4 space-y-1 glow-cyan">
+          <span class="text-[10px] font-code text-cyan-400 uppercase font-semibold">OPTIMIZED SIZE</span>
+          <div id="result-final-size" class="text-xl sm:text-2xl font-hud font-bold text-cyan-300 glow-cyan-text">0 MB</div>
+          <span class="text-[11px] font-code text-cyan-400">Ready for Uplink</span>
+        </div>
+
+        <!-- Bandwidth Saved -->
+        <div class="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-4 space-y-1">
+          <span class="text-[10px] font-code text-emerald-400 uppercase font-semibold">BANDWIDTH SAVED</span>
+          <div id="result-saved-percent" class="text-xl sm:text-2xl font-hud font-bold text-emerald-400 glow-emerald-text">-0%</div>
+          <span id="result-saved-mb" class="text-[11px] font-code text-emerald-300">0 MB freed</span>
+        </div>
+
+        <!-- Synthesis Execution Time -->
+        <div class="bg-black/50 border border-slate-800 rounded-xl p-4 space-y-1">
+          <span class="text-[10px] font-code text-slate-300 uppercase">SYNTHESIS TIME</span>
+          <div id="result-elapsed" class="text-xl sm:text-2xl font-hud font-bold text-fuchsia-400 glow-violet-text">0.0s</div>
+          <span class="text-[11px] font-code text-slate-300">Hardware Accelerated</span>
+        </div>
+      </div>
+
+      <!-- Preview Inspector (Optimized Frame Preview) -->
+      <div class="bg-black/60 rounded-xl p-4 border border-cyan-500/20 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-code text-slate-300 uppercase flex items-center gap-2">
+            <i class="fa-solid fa-eye text-cyan-400"></i> DOCUMENT VISUAL VERIFICATION (PAGE 1)
+          </span>
+          <span class="text-[10px] font-code text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/30">100% INTACT COMPATIBILITY</span>
+        </div>
+
+        <div class="flex justify-center items-center p-4 bg-slate-950 rounded-lg border border-slate-800/80 overflow-hidden">
+          <div class="relative max-w-full max-h-[360px] overflow-hidden rounded shadow-2xl border border-cyan-500/30 flex justify-center">
+            <canvas id="preview-canvas" class="max-h-[360px] w-auto h-auto object-contain"></canvas>
+            <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-1 rounded text-[10px] font-code text-cyan-300 border border-cyan-400/40">
+              OPTIMIZED RENDER
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset / Uplink Another Action -->
+      <div class="flex justify-center pt-2">
+        <button id="reset-btn" class="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white font-code text-xs transition-all flex items-center gap-2">
+          <i class="fa-solid fa-arrow-rotate-left"></i>
+          <span>OPTIMIZE ANOTHER DOCUMENT</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  </main>
+
+  <footer class="mt-auto border-t border-cyan-500/10 bg-slate-950/80 py-5 text-center text-xs font-code text-slate-300">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+        <span>NEURAPRESS QUANTUM ENGINE</span>
+      </div>
+      <div>Zero Remote Uplinks • Hardware-Accelerated Canvas Engine • Secure In-App Processing</div>
+      <div class="text-cyan-300">STATUS: CALIBRATED // ACTIVE</div>
+    </div>
+  </footer>
+
+  <script>
+    // Ensure PDF.js worker is properly wired (local offline engine)
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+    }
+
+    async function getPdfLib() {
+      if (window.PDFLib) return window.PDFLib;
+      if (window.pdfLib) return window.pdfLib;
+
+      // Try waiting briefly in case it's finishing script evaluation
+      for (let i = 0; i < 15; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        if (window.PDFLib) return window.PDFLib;
+        if (window.pdfLib) return window.pdfLib;
+      }
+
+      // Dynamic local fallback (bundled engine)
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'vendor/pdf-lib.min.js';
+        s.onload = () => resolve(window.PDFLib || window.pdfLib);
+        s.onerror = () => reject(new Error('PDF-Lib engine could not be initialized.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    const AppState = {
+      file: null,
+      pdfDocument: null,
+      originalBytes: null,
+      compressedBlob: null,
+      compressedFileName: 'optimized_document.pdf',
+      pageCount: 0,
+      audioEnabled: true,
+      synth: null,
+      preset: 'balanced',
+      scale: 1.0,
+      quality: 0.60,
+      grayscale: false,
+      cap: 1600,
+      forceGrayForRaster: false,
+      preservedCount: 0,
+      startTime: 0
+    };
+
+    function initSynth() {
+      try {
+        if (!AppState.synth && window.Tone) {
+          AppState.synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.005, decay: 0.08, sustain: 0.01, release: 0.08 }
+          }).toDestination();
+          AppState.synth.volume.value = -14;
+        }
+      } catch (e) {
+        console.warn("Audio synthesizer bypassed:", e);
+      }
+    }
+
+    function playSfx(type) {
+      if (!AppState.audioEnabled) return;
+      try {
+        initSynth();
+        if (Tone.context && Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        if (type === 'click') {
+          AppState.synth.triggerAttackRelease("C6", "32n");
+        } else if (type === 'uplink') {
+          AppState.synth.triggerAttackRelease(["E5", "G5", "B5"], "16n");
+        } else if (type === 'start') {
+          AppState.synth.triggerAttackRelease(["C5", "F5", "A5", "C6"], "8n");
+        } else if (type === 'complete') {
+          AppState.synth.triggerAttackRelease(["G5", "C6", "E6", "G6"], "4n");
+        } else if (type === 'scan') {
+          AppState.synth.triggerAttackRelease("D6", "64n");
+        }
+      } catch (err) {
+        // Graceful silent fallback
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        info: 'border-cyan-500/40 text-cyan-300 bg-slate-950/90',
+        success: 'border-emerald-500/40 text-emerald-300 bg-slate-950/90',
+        warning: 'border-amber-500/40 text-amber-300 bg-slate-950/90',
+        error: 'border-rose-500/40 text-rose-300 bg-slate-950/90'
+      };
+
+      const icons = {
+        info: 'fa-info-circle',
+        success: 'fa-check-circle',
+        warning: 'fa-triangle-exclamation',
+        error: 'fa-circle-xmark'
+      };
+
+      toast.className = `pointer-events-auto flex items-center space-x-3 px-4 py-3 rounded-xl border ${colors[type] || colors.info} shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 font-code text-xs`;
+      const icon = document.createElement('i');
+      icon.className = `fa-solid ${icons[type] || icons.info} text-base`;
+      const text = document.createElement('span');
+      text.textContent = message;
+      toast.append(icon, text);
+
+      container.appendChild(toast);
+      
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3800);
+    }
+
+    if (window.neurapress && window.neurapress.onDownloadComplete) {
+      window.neurapress.onDownloadComplete((result) => {
+        if (result.success) {
+          showToast(`Saved ${result.fileName} successfully to ${result.filePath}`, 'success');
+        } else {
+          showToast(`Unable to save ${result.fileName}`, 'error');
+        }
+      });
+    }
+
+    function formatBytes(bytes, decimals = 2) {
+      if (!bytes || bytes === 0) return '0.00 KB';
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    const presetConfigs = {
+      extreme: { scale: 0.70, quality: 0.40, grayscale: false, cap: 1100, forceGrayForRaster: true, est: '~60% - 85% Reduction' },
+      balanced: { scale: 1.0, quality: 0.60, grayscale: false, cap: 1600, forceGrayForRaster: false, est: '~30% - 65% Reduction' },
+      studio: { scale: 1.25, quality: 0.82, grayscale: false, cap: 2200, forceGrayForRaster: false, est: '~10% - 40% Reduction' },
+      custom: { scale: 1.0, quality: 0.60, grayscale: false, cap: 2400, forceGrayForRaster: false, est: 'Custom Parameters' }
+    };
+
+    function setPreset(presetKey) {
+      AppState.preset = presetKey;
+      playSfx('click');
+
+      const presetRadio = document.querySelector(`input[name="compression-preset"][value="${presetKey}"]`);
+      if (presetRadio) presetRadio.checked = true;
+
+      // Update Preset Radio Cards
+      document.querySelectorAll('.preset-card').forEach(card => {
+        const input = card.querySelector('input');
+        const indicator = card.querySelector('.radio-indicator div');
+        if (input.value === presetKey) {
+          card.classList.add('border-cyan-400', 'bg-cyan-950/40', 'glow-cyan');
+          card.classList.remove('border-cyan-500/20', 'bg-slate-900/60');
+          indicator.classList.remove('opacity-0');
+          indicator.classList.add('opacity-100');
+        } else {
+          card.classList.remove('border-cyan-400', 'bg-cyan-950/40', 'glow-cyan');
+          card.classList.add('border-cyan-500/20', 'bg-slate-900/60');
+          indicator.classList.remove('opacity-100');
+          indicator.classList.add('opacity-0');
+        }
+      });
+
+      const badge = document.getElementById('calibration-mode-badge');
+      if (presetKey === 'custom') {
+        badge.textContent = 'MANUAL CONTROL (UNLOCKED)';
+        badge.className = 'text-[10px] font-code text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/40';
+      } else {
+        badge.textContent = `LOCKED (${presetKey.toUpperCase()})`;
+        badge.className = 'text-[10px] font-code text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30';
+        
+        const cfg = presetConfigs[presetKey];
+        AppState.scale = cfg.scale;
+        AppState.quality = cfg.quality;
+        AppState.grayscale = cfg.grayscale;
+        AppState.cap = cfg.cap;
+        AppState.forceGrayForRaster = cfg.forceGrayForRaster;
+
+        document.getElementById('scale-slider').value = cfg.scale;
+        document.getElementById('scale-val-label').textContent = `${cfg.scale.toFixed(2)}x (${Math.round(cfg.scale * 100)}%)`;
+
+        document.getElementById('quality-slider').value = Math.round(cfg.quality * 100);
+        document.getElementById('quality-val-label').textContent = `${Math.round(cfg.quality * 100)}%`;
+
+        document.getElementById('grayscale-toggle').checked = cfg.grayscale;
+        document.getElementById('doc-estimated-gain').textContent = cfg.est;
+      }
+    }
+
+    document.getElementById('scale-slider').addEventListener('input', (e) => {
+      AppState.scale = parseFloat(e.target.value);
+      document.getElementById('scale-val-label').textContent = `${AppState.scale.toFixed(2)}x (${Math.round(AppState.scale * 100)}%)`;
+      if (AppState.preset !== 'custom') setPreset('custom');
+    });
+
+    document.getElementById('quality-slider').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      AppState.quality = val / 100;
+      document.getElementById('quality-val-label').textContent = `${val}%`;
+      if (AppState.preset !== 'custom') setPreset('custom');
+    });
+
+    document.getElementById('grayscale-toggle').addEventListener('change', (e) => {
+      AppState.grayscale = e.target.checked;
+      if (AppState.preset !== 'custom') setPreset('custom');
+    });
+
+    document.querySelectorAll('input[name="compression-preset"]').forEach(radio => {
+      radio.closest('.preset-card').addEventListener('click', () => {
+        setPreset(radio.value);
+      });
+    });
+
+    async function loadPdfFile(file) {
+      if (!file || file.type !== 'application/pdf') {
+        showToast('Invalid format. Please supply a valid .pdf document', 'warning');
+        return;
+      }
+
+      playSfx('uplink');
+      showToast('Uplinking PDF binary buffer...', 'info');
+
+      try {
+        AppState.file = file;
+        const arrayBuffer = await file.arrayBuffer();
+        AppState.originalBytes = new Uint8Array(arrayBuffer);
+
+        const loadingTask = pdfjsLib.getDocument({ data: AppState.originalBytes.slice(0) });
+        AppState.pdfDocument = await loadingTask.promise;
+        AppState.pageCount = AppState.pdfDocument.numPages;
+
+        // Populate Target Blueprint card
+        document.getElementById('doc-filename').textContent = file.name;
+        document.getElementById('doc-original-size').textContent = formatBytes(file.size);
+        document.getElementById('doc-pages').textContent = AppState.pageCount;
+        document.getElementById('doc-status-tag').textContent = 'BUFFER READY';
+        document.getElementById('doc-status-tag').className = 'text-[10px] font-code text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/40';
+
+        // Enable action button
+        const actionBtn = document.getElementById('compress-action-btn');
+        actionBtn.disabled = false;
+        actionBtn.className = 'w-full py-4 rounded-xl font-hud font-extrabold text-sm sm:text-base tracking-wider uppercase transition-all duration-300 flex items-center justify-center space-x-3 bg-gradient-to-r from-cyan-400 to-indigo-500 text-black hover:from-cyan-300 hover:to-indigo-400 cursor-pointer shadow-[0_0_20px_rgba(0,243,255,0.4)]';
+
+        // Reveal the CLEAR button for the active document
+        document.getElementById('clear-file-btn').classList.remove('hidden');
+
+        const baseName = file.name.replace(/\.pdf$/i, '');
+        AppState.compressedFileName = `${baseName}_optimized.pdf`;
+
+        showToast(`PDF loaded: ${AppState.pageCount} page(s) ready for compression`, 'success');
+      } catch (error) {
+        console.error('PDF parsing error:', error);
+        showToast('Error reading PDF. File may be encrypted or corrupted', 'error');
+      }
+    }
+
+    const dropzone = document.getElementById('dropzone-card');
+    const fileInput = document.getElementById('file-input');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        loadPdfFile(e.target.files[0]);
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(event => {
+      dropzone.addEventListener(event, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('border-cyan-300', 'bg-cyan-950/30', 'scale-[1.008]');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(event => {
+      dropzone.addEventListener(event, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('border-cyan-300', 'bg-cyan-950/30', 'scale-[1.008]');
+      });
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        loadPdfFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    document.getElementById('generate-sample-btn').addEventListener('click', async () => {
+      playSfx('click');
+      showToast('Synthesizing high-density graphic demo PDF...', 'info');
+
+      try {
+        const PDFLibInstance = await getPdfLib();
+        const { PDFDocument, rgb } = PDFLibInstance;
+        const pdfDoc = await PDFDocument.create();
+
+        // Create 2 demo pages with graphic matrix lines and blocks
+        for (let p = 1; p <= 2; p++) {
+          const page = pdfDoc.addPage([595, 842]);
+          const { width, height } = page.getSize();
+
+          // Futuristic background grid
+          for (let y = 60; y < height - 60; y += 45) {
+            page.drawLine({
+              start: { x: 50, y: y },
+              end: { x: width - 50, y: y },
+              thickness: 0.6,
+              color: rgb(0.1, 0.35, 0.55),
+              opacity: 0.35
+            });
+          }
+
+          // Header block
+          page.drawRectangle({
+            x: 50,
+            y: height - 160,
+            width: width - 100,
+            height: 95,
+            color: rgb(0.04, 0.08, 0.16),
+            borderColor: rgb(0, 0.95, 1),
+            borderWidth: 1.5
+          });
+
+          page.drawText(`NEURAPRESS QUANTUM SPECIMEN // P0${p}`, {
+            x: 70,
+            y: height - 110,
+            size: 15,
+            color: rgb(0, 0.95, 1)
+          });
+
+          page.drawText(`Synthesized in-memory payload verification block on ${new Date().toLocaleDateString()}.`, {
+            x: 70,
+            y: height - 135,
+            size: 10,
+            color: rgb(0.75, 0.8, 0.9)
+          });
+
+          // Dense color blocks to demonstrate image compression
+          for (let i = 0; i < 7; i++) {
+            page.drawRectangle({
+              x: 65 + (i * 64),
+              y: height - 340,
+              width: 50,
+              height: 110,
+              color: rgb(0.12 * i, 0.35, 0.85 - 0.12 * i),
+              opacity: 0.85
+            });
+          }
+
+          page.drawText('Legibility verification: Text vectors and typography retain crisp readability.', {
+            x: 65,
+            y: 130,
+            size: 10,
+            color: rgb(0.65, 0.7, 0.8)
+          });
+        }
+
+        const sampleBytes = await pdfDoc.save();
+        const sampleBlob = new Blob([sampleBytes], { type: 'application/pdf' });
+        const sampleFile = new File([sampleBlob], 'Quantum_Engine_Demo_Payload.pdf', { type: 'application/pdf' });
+
+        await loadPdfFile(sampleFile);
+      } catch (err) {
+        console.error('Demo generation fault:', err);
+        showToast('Failed to synthesize sample PDF: ' + err.message, 'error');
+      }
+    });
+
+    document.getElementById('compress-action-btn').addEventListener('click', async () => {
+      if (!AppState.pdfDocument || !AppState.originalBytes) return;
+
+      playSfx('start');
+      AppState.startTime = performance.now();
+
+      const processingHud = document.getElementById('processing-hud');
+      const resultsHud = document.getElementById('results-hud');
+      const scanGrid = document.getElementById('active-scan-grid');
+
+      processingHud.classList.remove('hidden');
+      resultsHud.classList.add('hidden');
+      scanGrid.innerHTML = '';
+
+      const progressFill = document.getElementById('progress-fill');
+      const percentageText = document.getElementById('process-percentage');
+      const pageCounterLabel = document.getElementById('page-counter-label');
+      const substepLabel = document.getElementById('process-substep-label');
+
+      processingHud.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      try {
+        const PDFLibInstance = await getPdfLib();
+        const { PDFDocument } = PDFLibInstance;
+
+        // Load source document so vector/text pages can be copied losslessly
+        const srcDoc = await PDFDocument.load(AppState.originalBytes);
+        const newPdfDoc = await PDFDocument.create();
+
+        const jpegQuality = AppState.quality;
+        const maxEdge = AppState.cap;
+        const OPSref = (window.pdfjsLib && window.pdfjsLib.OPS) ? window.pdfjsLib.OPS : null;
+
+        let firstPageRenderCanvas = null;
+        let preservedCount = 0;
+        let rasterCount = 0;
+
+        // Process pages sequentially with frame ticks to keep UI fluid
+        for (let pageNum = 1; pageNum <= AppState.pageCount; pageNum++) {
+          const pct = Math.round(((pageNum - 1) / AppState.pageCount) * 100);
+          progressFill.style.width = `${pct}%`;
+          percentageText.textContent = `${pct}%`;
+          pageCounterLabel.textContent = `PAGES: ${pageNum} / ${AppState.pageCount}`;
+          playSfx('scan');
+
+          // Yield to UI loop
+          await new Promise(r => requestAnimationFrame(r));
+
+          const page = await AppState.pdfDocument.getPage(pageNum);
+          const originalViewport = page.getViewport({ scale: 1.0 });
+
+          // --- Content analysis: flatten only pages containing embedded images.
+          // Pure vector/text pages are copied losslessly so they never bloat. ---
+          let flatten = true;
+          if (OPSref) {
+            try {
+              const opList = await page.getOperatorList();
+              let imgCount = 0;
+              for (const fn of opList.fnArray) {
+                if (fn === OPSref.paintImageXObject || fn === OPSref.paintJpegXObject || fn === OPSref.paintInlineImageXObject) {
+                  imgCount++;
+                }
+              }
+              flatten = imgCount > 0;
+            } catch (e) {
+              flatten = true;
+            }
+          }
+
+          // Explicit monochrome request always forces a raster pass
+          if (AppState.grayscale) flatten = true;
+
+          if (!flatten) {
+            substepLabel.textContent = `Preserving vector page ${pageNum} of ${AppState.pageCount} (lossless)...`;
+            try {
+              const [copiedPage] = await newPdfDoc.copyPages(srcDoc, [pageNum - 1]);
+              newPdfDoc.addPage(copiedPage);
+              preservedCount++;
+            } catch (e) {
+              flatten = true;
+            }
+          }
+
+          if (flatten) {
+            rasterCount++;
+            substepLabel.textContent = `Quantizing page ${pageNum} of ${AppState.pageCount}...`;
+
+            // Adaptive downsampling: cap the long edge so big scans actually shrink
+            let effScale = AppState.scale;
+            const longEdge = Math.max(originalViewport.width, originalViewport.height);
+            effScale = Math.min(effScale, Math.max(0.20, maxEdge / longEdge));
+
+            const viewport = page.getViewport({ scale: effScale });
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+
+            await page.render({
+              canvasContext: ctx,
+              viewport: viewport
+            }).promise;
+
+            // Force grayscale (user/preset) or auto-detect color-neutral source
+            let useGray = AppState.grayscale || AppState.forceGrayForRaster;
+            if (!useGray) {
+              const probe = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const pd = probe.data;
+              let sat = 0;
+              let n = 0;
+              for (let i = 0; i < pd.length; i += 16) {
+                sat += Math.abs(pd[i] - pd[i + 1]) + Math.abs(pd[i + 1] - pd[i + 2]);
+                n++;
+              }
+              useGray = n > 0 && (sat / n) < 30;
+            }
+            if (useGray) {
+              const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const data = imgData.data;
+              for (let i = 0; i < data.length; i += 4) {
+                const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                data[i] = gray;
+                data[i + 1] = gray;
+                data[i + 2] = gray;
+              }
+              ctx.putImageData(imgData, 0, 0);
+            }
+
+            // Quantize to compressed JPEG blob
+            const pageJpegBlob = await new Promise(resolve => {
+              canvas.toBlob(resolve, 'image/jpeg', jpegQuality);
+            });
+            const pageJpegBytes = await pageJpegBlob.arrayBuffer();
+
+            // Embed optimized image stream into target PDF
+            const embeddedImage = await newPdfDoc.embedJpg(pageJpegBytes);
+            const newPdfPage = newPdfDoc.addPage([originalViewport.width, originalViewport.height]);
+            newPdfPage.drawImage(embeddedImage, {
+              x: 0,
+              y: 0,
+              width: originalViewport.width,
+              height: originalViewport.height
+            });
+
+            // Add thumbnail snapshot to live scanner matrix
+            const thumbCanvas = document.createElement('canvas');
+            const thumbScale = 55 / canvas.width;
+            thumbCanvas.width = 55;
+            thumbCanvas.height = Math.max(30, Math.floor(canvas.height * thumbScale));
+            const tCtx = thumbCanvas.getContext('2d');
+            tCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+
+            const thumbDiv = document.createElement('div');
+            thumbDiv.className = 'flex-shrink-0 flex flex-col items-center p-1 bg-black/80 border border-cyan-500/40 rounded-lg shadow';
+            thumbCanvas.className = 'rounded object-cover';
+            thumbDiv.appendChild(thumbCanvas);
+
+            const label = document.createElement('span');
+            label.className = 'text-[9px] font-code text-cyan-300 mt-1';
+            label.textContent = `P${pageNum}`;
+            thumbDiv.appendChild(label);
+            scanGrid.appendChild(thumbDiv);
+
+            if (pageNum === 1) {
+              firstPageRenderCanvas = canvas;
+            }
+          } else {
+            // Lossless-copied vector page tile marker
+            const tileDiv = document.createElement('div');
+            tileDiv.className = 'flex-shrink-0 flex flex-col items-center justify-center p-2 bg-cyan-950/30 border border-cyan-500/30 rounded-lg shadow w-[55px] h-[74px]';
+            tileDiv.innerHTML = '<i class="fa-solid fa-vector-square text-cyan-300"></i>';
+            const tileLabel = document.createElement('span');
+            tileLabel.className = 'text-[9px] font-code text-slate-300 mt-1';
+            tileLabel.textContent = `P${pageNum} V`;
+            tileDiv.appendChild(tileLabel);
+            scanGrid.appendChild(tileDiv);
+          }
+        }
+
+        substepLabel.textContent = 'Sealing binary PDF buffer & finalizing metadata...';
+        progressFill.style.width = '100%';
+        percentageText.textContent = '100%';
+
+        const finalPdfBytes = await newPdfDoc.save();
+        AppState.compressedBlob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+
+        AppState.preservedCount = preservedCount;
+        const endTime = performance.now();
+        const durationSec = ((endTime - AppState.startTime) / 1000).toFixed(2);
+
+        // Update visual verification canvas
+        if (firstPageRenderCanvas) {
+          const previewCanvas = document.getElementById('preview-canvas');
+          previewCanvas.width = firstPageRenderCanvas.width;
+          previewCanvas.height = firstPageRenderCanvas.height;
+          const pCtx = previewCanvas.getContext('2d');
+          pCtx.drawImage(firstPageRenderCanvas, 0, 0);
+        }
+
+        // Show Results HUD
+        setTimeout(() => {
+          processingHud.classList.add('hidden');
+          resultsHud.classList.remove('hidden');
+          resultsHud.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          const origSize = AppState.file.size;
+          const finalSize = AppState.compressedBlob.size;
+          const savedBytes = Math.max(0, origSize - finalSize);
+          const percentSaved = Math.max(0, ((savedBytes / origSize) * 100)).toFixed(1);
+
+          document.getElementById('result-orig-size').textContent = formatBytes(origSize);
+          document.getElementById('result-final-size').textContent = formatBytes(finalSize);
+          document.getElementById('result-saved-percent').textContent = `-${percentSaved}%`;
+          document.getElementById('result-saved-mb').textContent = `${formatBytes(savedBytes)} freed`;
+          document.getElementById('result-elapsed').textContent = `${durationSec}s`;
+
+          const strategyMsg = preservedCount > 0
+            ? `${preservedCount} vector/text page(s) preserved losslessly • ${rasterCount} image page(s) re-quantized at capped DPI`
+            : `${rasterCount} image page(s) re-quantized at capped DPI (capped to ${maxEdge}px long edge)`;
+          const strategyEl = document.getElementById('result-strategy');
+          if (strategyEl) strategyEl.textContent = strategyMsg;
+
+          playSfx('complete');
+          confetti({
+            particleCount: 60,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#00f3ff', '#a855f7', '#10b981']
+          });
+
+          showToast(`Compression complete! Reduced by ${percentSaved}%`, 'success');
+        }, 400);
+
+      } catch (err) {
+        console.error('Optimization pipeline fault:', err);
+        processingHud.classList.add('hidden');
+        showToast('Pipeline error: ' + err.message, 'error');
+      }
+    });
+
+    document.getElementById('download-btn').addEventListener('click', () => {
+      if (!AppState.compressedBlob) return;
+      playSfx('click');
+
+      const url = URL.createObjectURL(AppState.compressedBlob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = AppState.compressedFileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      // Delay revocation so the download can start reading the blob first
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+      showToast(`Downloading: ${AppState.compressedFileName}`, 'success');
+    });
+
+    function clearLoadedFile() {
+      try {
+        if (AppState.pdfDocument) AppState.pdfDocument.destroy();
+      } catch (e) {}
+      AppState.file = null;
+      AppState.pdfDocument = null;
+      AppState.originalBytes = null;
+      AppState.compressedBlob = null;
+      AppState.pageCount = 0;
+
+      document.getElementById('doc-filename').textContent = 'none_loaded.pdf';
+      document.getElementById('doc-original-size').textContent = '0.00 KB';
+      document.getElementById('doc-pages').textContent = '0';
+      const estCfg = presetConfigs[AppState.preset];
+      document.getElementById('doc-estimated-gain').textContent = (estCfg && estCfg.est) ? estCfg.est : '~30% - 65% Reduction';
+      document.getElementById('doc-status-tag').textContent = 'AWAITING FILE';
+      document.getElementById('doc-status-tag').className = 'text-[10px] font-code text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800';
+
+      const actionBtn = document.getElementById('compress-action-btn');
+      actionBtn.disabled = true;
+      actionBtn.className = 'w-full py-4 rounded-xl font-hud font-extrabold text-sm sm:text-base tracking-wider uppercase transition-all duration-300 flex items-center justify-center space-x-3 bg-slate-800/80 text-slate-300 border border-slate-700/80 cursor-not-allowed';
+
+      document.getElementById('clear-file-btn').classList.add('hidden');
+      document.getElementById('processing-hud').classList.add('hidden');
+      document.getElementById('results-hud').classList.add('hidden');
+
+      const fileInputEl = document.getElementById('file-input');
+      if (fileInputEl) fileInputEl.value = '';
+    }
+
+    document.getElementById('clear-file-btn').addEventListener('click', () => {
+      playSfx('click');
+      clearLoadedFile();
+      showToast('Document cleared. Select a new PDF to continue', 'info');
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      playSfx('click');
+      clearLoadedFile();
+      document.getElementById('dropzone-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast('Engine reset. Ready for next uplink', 'info');
+    });
+
+    const audioBtn = document.getElementById('audio-toggle-btn');
+    const audioIcon = document.getElementById('audio-icon');
+    audioBtn.addEventListener('click', () => {
+      AppState.audioEnabled = !AppState.audioEnabled;
+      if (AppState.audioEnabled) {
+        audioIcon.className = 'fa-solid fa-volume-high text-cyan-400';
+        showToast('Audio Feedback: ACTIVE', 'info');
+        playSfx('click');
+      } else {
+        audioIcon.className = 'fa-solid fa-volume-xmark text-slate-300';
+        showToast('Audio Feedback: MUTED', 'info');
+      }
+    });
+
+    // Default initialization
+    setPreset('balanced');
+  </script>
+</body>
+</html>

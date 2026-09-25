@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# Production & Packaging Builds
+dist/
+dist-unpacked/
+out/
+.icon-ico/
+
+# PyInstaller & Python Builds
+build/NEURAPRESS_Quantum_Native/
+build/*/
+!build/
+__pycache__/
+*.py[cod]
+*$py.class
+*.spec.bak
+*.toc
+*.pkg
+*.pyz
+base_library.zip
+
+# Test & Debug Artifacts
+selftest_screenshot.png
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment & Secrets (Prevent accidental leaks)
+.env
+.env.local
+.env.*.local
+*.p8
+*.p12
+*.pfx
+*.cer
+*.crt
+*.key
+*.pem
+
+# IDE & Editor Directories
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*~
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+[Dd]esktop.ini
+[Tt]humbs.db

@@ -1,0 +1,79 @@
+{
+  "name": "neurapress-quantum-pdf-compressor",
+  "version": "5.0.0",
+  "description": "Hyper-Quantum Local Desktop PDF Compressor",
+  "main": "main.js",
+  "author": "Tahir Shaikh <tahirshaikh744@gmail.com> (Neuron TS Labs)",
+  "license": "MIT",
+  "keywords": [
+    "pdf",
+    "compressor",
+    "electron",
+    "offline",
+    "quantum-hud",
+    "windows",
+    "pdf-compression",
+    "privacy-first"
+  ],
+  "scripts": {
+    "start": "electron .",
+    "selftest": "electron selftest.js",
+    "build:portable": "electron-builder --win portable --x64",
+    "build:installer": "electron-builder --win nsis --x64",
+    "build:all": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^29.1.5",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.neurapress.pdfcompressor",
+    "productName": "NEURAPRESS Quantum PDF Compressor",
+    "directories": {
+      "output": "dist"
+    },
+    "icon": "build/icon.ico",
+    "afterPack": "after-pack.js",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "splash.html",
+      "package.json",
+      "vendor/**",
+      "build/icon.png",
+      "build/splash_emblem.png"
+    ],
+    "electronLanguages": [
+      "en-US"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "allowScripts": {
+    "electron@29.4.6": true
+  }
+}
