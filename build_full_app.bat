@@ -35,6 +35,6 @@ if errorlevel 1 (
 
 echo.
 echo [SUCCESS] Full app build completed.
-echo Portable: dist\NEURAPRESS Quantum PDF Compressor 5.0.0.exe
-echo Installer: dist\NEURAPRESS Quantum PDF Compressor Setup 5.0.0.exe
+echo Portable: dist\NEURAPRESS Quantum PDF Compressor 5.0.1.exe
+echo Installer: dist\NEURAPRESS Quantum PDF Compressor Setup 5.0.1.exe
 exit /b 0

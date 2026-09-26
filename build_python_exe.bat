@@ -3,7 +3,7 @@ title Compiling Native Python Windows App (.exe)
 color 0a
 echo ========================================================
 echo   NEURAPRESS - NATIVE PYTHON EXE COMPILER
-echo   (No Node.js or Electron needed!)
+echo   (Deterministic Build with Pinned Dependencies)
 echo ========================================================
 echo.
 
@@ -12,20 +12,30 @@ if %errorlevel% neq 0 (
     echo [ERROR] Python is not installed or not in your PATH!
     echo Download Python from: https://www.python.org/downloads/
     pause
-    exit /b
+    exit /b 1
 )
 
-echo [1/2] Installing PyInstaller and PDF compression engine...
-pip install --upgrade pyinstaller pypdf
+echo [1/2] Installing pinned dependencies from requirements.txt...
+pip install -r requirements.txt
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to install pinned dependencies.
+    pause
+    exit /b 1
+)
 
 echo.
-echo [2/2] Compiling standalone Windows .exe...
-pyinstaller --noconsole --onefile --name "NEURAPRESS_Quantum_Native" standalone_gui.py
+echo [2/2] Compiling standalone Windows .exe using NEURAPRESS_Quantum_Native.spec...
+pyinstaller --clean --noconfirm NEURAPRESS_Quantum_Native.spec
+if %errorlevel% neq 0 (
+    echo [ERROR] PyInstaller compilation failed.
+    pause
+    exit /b 1
+)
 
 echo.
 echo ========================================================
-echo [SUCCESS] Windows .exe created!
+echo [SUCCESS] Windows Native .exe created!
 echo Location: dist/NEURAPRESS_Quantum_Native.exe
 echo ========================================================
 echo.
-pause
+exit /b 0

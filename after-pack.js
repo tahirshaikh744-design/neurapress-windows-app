@@ -23,10 +23,10 @@ module.exports = async function afterPack(context) {
     '--set-version-string', 'FileDescription', 'Hyper-Quantum Local PDF Compressor',
     '--set-version-string', 'CompanyName', 'Neuron TS Labs',
     '--set-version-string', 'LegalCopyright', 'Copyright \u00A9 2026 Tahir Shaikh (Neuron TS Labs)',
-    '--set-version-string', 'ProductVersion', '5.0.0',
-    '--set-version-string', 'FileVersion', '5.0.0',
-    '--set-file-version', '5.0.0',
-    '--set-product-version', '5.0.0',
+    '--set-version-string', 'ProductVersion', '5.0.1',
+    '--set-version-string', 'FileVersion', '5.0.1',
+    '--set-file-version', '5.0.1',
+    '--set-product-version', '5.0.1',
   ], { stdio: 'pipe' });
 
   console.log('[afterPack] icon + version embedded ->', exe);

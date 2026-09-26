@@ -21,12 +21,12 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-echo [1/3] Installing Electron dependencies...
-call npm install
+echo [1/3] Installing Electron dependencies with exact lockfile...
+call npm ci
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install dependencies.
+    echo [ERROR] Failed to install dependencies via npm ci.
     pause
-    exit /b
+    exit /b 1
 )
 
 echo.

@@ -1,0 +1,4 @@
+# NEURAPRESS Quantum Native Engine Dependencies (Pinned for reproducibility)
+pypdf==6.19.0
+pillow==12.3.0
+pyinstaller==6.22.3

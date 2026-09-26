@@ -1,6 +1,6 @@
 {
   "name": "neurapress-quantum-pdf-compressor",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Hyper-Quantum Local Desktop PDF Compressor",
   "main": "main.js",
   "author": "Tahir Shaikh <tahirshaikh744@gmail.com> (Neuron TS Labs)",
@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "start": "electron .",
+    "test": "electron selftest.js",
     "selftest": "electron selftest.js",
     "build:portable": "electron-builder --win portable --x64",
     "build:installer": "electron-builder --win nsis --x64",
@@ -34,6 +35,9 @@
     },
     "icon": "build/icon.ico",
     "afterPack": "after-pack.js",
+    "asarUnpack": [
+      "src/engine/**"
+    ],
     "files": [
       "main.js",
       "preload.js",
@@ -41,6 +45,7 @@
       "splash.html",
       "package.json",
       "vendor/**",
+      "src/**",
       "build/icon.png",
       "build/splash_emblem.png"
     ],
